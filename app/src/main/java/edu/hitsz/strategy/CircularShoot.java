@@ -14,8 +14,8 @@ public class CircularShoot implements ShootStrategy {
         List<BaseBullet> res = new LinkedList<>();
         int x = aircraft.getLocationX();
         int y = aircraft.getLocationY();
-        int speed = 10;
-        int shootNum = 20;
+        int speed = 20; //原来是10
+        int shootNum = 10;
 
         for (int i = 0; i < shootNum; i++) {
             double angle = 2 * Math.PI * i / shootNum;

@@ -51,7 +51,7 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
     /**
      * 时间间隔(ms)，控制刷新频率
      */
-    private int timeInterval = 40;
+    private int timeInterval = 16;
 
     private final HeroAircraft heroAircraft;
     private final List<AbstractEnemyAircraft> enemyAircrafts;
@@ -71,7 +71,7 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
     private int score = 0;
     private int time = 0;
     private int cycleDuration = 600;
-    private int heroShootCycleDuration = 400;
+    private int heroShootCycleDuration = 160; //改成每10帧发射一次
     private int cycleTime = 0;
     private int heroShootCycleTime = 0;
     private boolean gameOverFlag = false;
