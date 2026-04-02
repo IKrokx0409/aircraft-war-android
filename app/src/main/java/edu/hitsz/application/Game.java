@@ -40,6 +40,7 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
     // 在 Game 类中添加这些成员变量
     private String gameMode = "single";
     private boolean soundEnabled = true;
+    private MusicManager musicManager;
 
     // 添加 setter 方法（在构造方法后）
     public void setGameMode(String mode) {
@@ -127,8 +128,9 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
     private Thread gameThread;  // ← 添加：保存游戏线程的引用
     private final Object threadLock = new Object();  // ← 添加：线程锁
 
-    public Game(Context context) {
+    public Game(Context context, boolean isMusicOn) {
         super(context);
+        this.musicManager = new MusicManager(context, isMusicOn);
 
         ImageManager.initImage(context);
 
@@ -168,6 +170,7 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
+        musicManager.playBGM();
         // 在画布创建时初始化图片资源
         synchronized (threadLock){
             //如果旧进程还在运行，先等待它停止
@@ -210,6 +213,9 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
         mbLoop = false; // 终止游戏循环
+        if (musicManager != null) {
+            musicManager.releaseAll();
+        }
     }
 
     @Override
@@ -281,6 +287,11 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
             gameOverFlag = true;
             System.out.println("Game Over!");
 
+            if (musicManager != null) {
+                musicManager.playGameOverSound(); // 播放 Game Over 音效
+                musicManager.pauseBGM();          // 【新增】暂停背景音乐，让环境安静下来
+            }
+
             // 改为通过回调通知 MainActivity，而不是直接启动 EndActivity
             if (getContext() instanceof android.app.Activity) {
                 android.app.Activity activity = (android.app.Activity) getContext();
@@ -332,6 +343,9 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
             heroShootCycleTime %= heroShootCycleDuration;
             if(!gameOverFlag){
                 heroBullets.addAll(heroAircraft.shoot());
+                if (musicManager != null) {
+                    musicManager.playShootSound();
+                }
             }
         }
     }
@@ -365,6 +379,9 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
             if (heroAircraft.crash(bullet)) {
                 heroAircraft.decreaseHp(bullet.getPower());
                 bullet.vanish();
+                if (musicManager != null) {
+                    musicManager.playHitSound();
+                }
             }
         }
 
@@ -386,6 +403,10 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
                             score += 100;
                             props.addAll(enemyAircraft.dropProps());
                             bossIsActive = false;
+
+                            if (musicManager != null) {
+                                musicManager.stopBossBGM();
+                            }
                         } else {
                             score += 10;
                         }
@@ -394,6 +415,10 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
                             newEnemies.add(bossFactory.createEnemy());
                             bossIsActive = true;
                             bossSpawnCount++;
+
+                            if (musicManager != null) {
+                                musicManager.playBossBGM();
+                            }
                         }
                     }
                 }
@@ -408,6 +433,12 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
             if (prop.notValid()) continue;
             if (heroAircraft.crash(prop)) {
                 prop.activate(heroAircraft);
+
+                if (prop.getClass().getSimpleName().equals("BombProp")) {
+                    musicManager.playBombSound(); // 炸弹爆炸声
+                } else {
+                    musicManager.playGetSupplySound(); // 吃到加血或火力道具的音效
+                }
             }
         }
         enemyAircrafts.addAll(newEnemies);
@@ -505,6 +536,13 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
                 gameManager.reset();
             }
 
+            if (musicManager != null) {
+                // 1. 如果死的时候正好在打 Boss，先把 Boss 音乐停了（这个方法里自带了恢复普通 BGM 的逻辑）
+                musicManager.stopBossBGM();
+                // 2. 重新大声放起普通背景音乐！
+                musicManager.playBGM();
+            }
+
             System.out.println("Game Reset!");
         }
     }
@@ -550,6 +588,9 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
             // 游戏管理器清理
             if (gameManager != null) {
                 gameManager.cleanup();
+            }
+            if (musicManager != null) {
+                musicManager.releaseAll();
             }
         }
 

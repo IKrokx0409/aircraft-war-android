@@ -36,7 +36,7 @@ public class MainActivity extends AppCompatActivity implements Game.OnGameEndLis
         gameManager.initialize();
 
         // 创建游戏视图
-        gameView = new Game(this);
+        gameView = new Game(this, soundEnabled);
         gameView.setGameManager(gameManager);
         gameView.setGameMode(gameMode != null ? gameMode : "single");
         gameView.setSoundEnabled(soundEnabled);
