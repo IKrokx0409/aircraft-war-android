@@ -195,6 +195,16 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
         // 动态获取手机屏幕的宽高，替代原有的 AbstractFlyingObject.WINDOW_HEIGHT
         this.screenWidth = width;
         this.screenHeight = height;
+
+        edu.hitsz.basic.AbstractFlyingObject.WINDOW_WIDTH = width;
+        edu.hitsz.basic.AbstractFlyingObject.WINDOW_HEIGHT = height;
+
+        if (ImageManager.BACKGROUND_IMAGE != null) {
+            // 使用方法 createScaledBitmap拉伸图片
+            // 参数依次为：原图、目标宽度、目标高度、是否启用滤镜
+            ImageManager.BACKGROUND_IMAGE = Bitmap.createScaledBitmap(
+                    ImageManager.BACKGROUND_IMAGE, width, height, true);
+        }
     }
 
     @Override
