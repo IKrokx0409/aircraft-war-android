@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="20dp">
+
+    <!-- 游戏标题 -->
+    <TextView
+        android:id="@+id/tv_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="飞机大战"
+        android:textSize="48sp"
+        android:textStyle="bold"
+        android:textColor="#FF0000"
+        android:gravity="center"
+        android:layout_marginBottom="50dp" />
+
+    <!-- 单机模式按钮 -->
+    <Button
+        android:id="@+id/btn_single_mode"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:text="单机模式"
+        android:textSize="20sp"
+        android:layout_margin="10dp" />
+
+    <!-- 联机模式按钮 -->
+    <Button
+        android:id="@+id/btn_multi_mode"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:text="联机模式"
+        android:textSize="20sp"
+        android:layout_margin="10dp" />
+
+    <!-- 音效开关容器 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginTop="30dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="音效："
+            android:textSize="18sp"
+            android:layout_marginRight="10dp" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/switch_sound"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true" />
+
+    </LinearLayout>
+
+</LinearLayout>

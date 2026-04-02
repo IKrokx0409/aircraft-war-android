@@ -64,6 +64,23 @@ public class HeroAircraft extends AbstractAircraft {
         return instance;
     }
 
+    public void reset() {
+        // 重置生命值
+        this.hp = 1000;  // 改为你的初始 hp 值
+
+        // 重置位置到屏幕中心（假设屏幕宽高为 1080x1920）
+        // 如果你有 screenWidth/screenHeight，可以用参数方式
+        this.locationX = AbstractFlyingObject.WINDOW_WIDTH / 2;   // 屏幕中心 X
+        this.locationY = AbstractFlyingObject.WINDOW_HEIGHT - ImageManager.HERO_IMAGE.getHeight();
+
+        // 重置速度
+        this.speedX = 0;
+        this.speedY = 0;
+
+        //重置射击模式为直射
+        this.setStrategy(new DirectShoot());
+    }
+
     @Override
     public void forward() {
         // 英雄机由鼠标控制，不通过forward函数移动

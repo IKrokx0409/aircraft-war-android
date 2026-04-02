@@ -11,15 +11,28 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.AircraftWar">
+
+        <!-- 起始界面 (启动页面) - 单实例模式 -->
         <activity
-            android:name=".MainActivity"
-            android:exported="true">
+            android:name=".StartActivity"
+            android:exported="true"
+            android:launchMode="singleTask">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- 游戏界面 -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true" />
+
+        <!-- 游戏结束界面 -->
+        <activity
+            android:name=".EndActivity"
+            android:exported="true" />
+
     </application>
 
 </manifest>

@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">AircraftWar</string>
+    <string name="final_score">最终得分：%d</string>
 </resources>

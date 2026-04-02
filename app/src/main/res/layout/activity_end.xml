@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="20dp">
+
+    <!-- 游戏结束标题 -->
+    <TextView
+        android:id="@+id/tv_game_over"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="游戏结束"
+        android:textSize="48sp"
+        android:textStyle="bold"
+        android:textColor="#FF0000"
+        android:gravity="center"
+        android:layout_marginBottom="30dp" />
+
+    <!-- 显示得分 -->
+    <TextView
+        android:id="@+id/tv_score"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="最终得分：0"
+        android:textSize="32sp"
+        android:textColor="#000000"
+        android:gravity="center"
+        android:layout_marginBottom="50dp" />
+
+    <!-- 重新开始按钮 -->
+    <Button
+        android:id="@+id/btn_restart"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:text="重新开始"
+        android:textSize="20sp"
+        android:layout_margin="10dp" />
+
+    <!-- 返回主菜单按钮 -->
+    <Button
+        android:id="@+id/btn_main_menu"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:text="返回主菜单"
+        android:textSize="20sp"
+        android:layout_margin="10dp" />
+
+    <!-- 退出游戏按钮 -->
+    <Button
+        android:id="@+id/btn_exit"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:text="退出游戏"
+        android:textSize="20sp"
+        android:layout_margin="10dp" />
+
+</LinearLayout>
