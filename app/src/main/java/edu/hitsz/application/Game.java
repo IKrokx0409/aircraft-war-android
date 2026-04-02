@@ -1,5 +1,9 @@
 package edu.hitsz.application;
 
+import android.content.Intent;  // ← 添加这行
+import edu.hitsz.EndActivity;  // ← 添加这行
+import edu.hitsz.manager.GameManager;  // ← 添加这行
+
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -33,7 +37,50 @@ import java.util.List;
  */
 public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnable {
 
+    // 在 Game 类中添加这些成员变量
+    private String gameMode = "single";
+    private boolean soundEnabled = true;
+
+    // 添加 setter 方法（在构造方法后）
+    public void setGameMode(String mode) {
+        this.gameMode = mode;
+    }
+
+    public void setSoundEnabled(boolean enabled) {
+        this.soundEnabled = enabled;
+        // 可在此处控制游戏音效的启用/禁用
+        // 如果有 SoundManager，调用: SoundManager.getInstance().setEnabled(enabled);
+    }
+
+    public String getGameMode() {
+        return gameMode;
+    }
+
+    public boolean isSoundEnabled() {
+        return soundEnabled;
+    }
     private int backGroundTop = 0;
+
+    // 游戏管理器
+    private GameManager gameManager;
+
+    // 游戏界面回调接口
+    private OnGameEndListener onGameEndListener;
+
+    // 回调接口定义
+    public interface OnGameEndListener {
+        void onGameEnd(int score);
+    }
+
+    // 设置游戏管理器
+    public void setGameManager(GameManager manager) {
+        this.gameManager = manager;
+    }
+
+    // 设置游戏结束监听
+    public void setOnGameEndListener(OnGameEndListener listener) {
+        this.onGameEndListener = listener;
+    }
 
     // Android 绘图与线程控制组件
     private SurfaceHolder surfaceHolder;
@@ -76,6 +123,10 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
     private int heroShootCycleTime = 0;
     private boolean gameOverFlag = false;
 
+    // 在现有的成员变量中添加这些
+    private Thread gameThread;  // ← 添加：保存游戏线程的引用
+    private final Object threadLock = new Object();  // ← 添加：线程锁
+
     public Game(Context context) {
         super(context);
 
@@ -88,6 +139,7 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
         this.setFocusable(true);
 
         heroAircraft = HeroAircraft.getInstance();
+        heroAircraft.reset(); //在构造时立刻重置
         this.mobEnemyFactory = new MobEnemyFactory();
         this.eliteEnemyFactory = new EliteEnemyFactory();
         this.elitePlusEnemyFactory = new ElitePlusEnemyFactory();
@@ -117,9 +169,25 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
         // 在画布创建时初始化图片资源
+        synchronized (threadLock){
+            //如果旧进程还在运行，先等待它停止
+            if (gameThread != null && gameThread.isAlive()){
+                mbLoop = false;
+                try{
+                    gameThread.join(2000); //最多等待2秒
+                    if (gameThread.isAlive()){
+                        System.err.println("Warning: Game thread did not stop in time!");
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        }
+        heroAircraft.reset(); //启动线程前，确保英雄机状态正确
         // ImageManager.initImage(getContext());
         mbLoop = true;
-        new Thread(this).start(); // 启动游戏主线程
+        gameThread = new Thread(this);
+        gameThread.start(); // 启动游戏主线程
     }
 
     @Override
@@ -164,6 +232,11 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
                 e.printStackTrace();
             }
         }
+
+        //线程结束时清理
+        synchronized (threadLock) {
+            gameThread = null;
+        }
     }
 
     // ==========================================
@@ -193,10 +266,21 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
         postProcessAction();
 
         // 游戏结束检查
-        if (heroAircraft.getHp() <= 0) {
+        if (time > 100 && heroAircraft.getHp() <= 0) { //只在游戏运行一小段时间后才检查（避免刚启动就结束）
             mbLoop = false; // 停止主循环
             gameOverFlag = true;
             System.out.println("Game Over!");
+
+            // 改为通过回调通知 MainActivity，而不是直接启动 EndActivity
+            if (getContext() instanceof android.app.Activity) {
+                android.app.Activity activity = (android.app.Activity) getContext();
+                activity.runOnUiThread(() -> {
+                    // 调用回调接口，让 MainActivity 处理界面跳转
+                    if (onGameEndListener != null) {
+                        onGameEndListener.onGameEnd(score);
+                    }
+                });
+            }
 
             // 你的排行榜逻辑 (注意：Android中写文件需要修改DAO实现，这里先保留逻辑)
             GameRecordDao dao = new GameRecordDaoImpl();
@@ -212,6 +296,7 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
             for (GameRecord record : records) {
                 System.out.printf("rank%2d: %s, %6d, %s\n", rank++, record.getPlayerName(), record.getScore(), record.getFormattedTimestamp());
             }
+            return; //游戏结束后停止处理
         }
     }
 
@@ -378,5 +463,86 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
         canvas.drawText("SCORE:" + this.score, x, y, paint);
         y = y + 70;
         canvas.drawText("LIFE:" + this.heroAircraft.getHp(), x, y, paint);
+    }
+
+    /**
+     * 重置游戏状态（用于重新开始游戏）必须在线程完全停止后调用
+     */
+    public void reset() {
+        synchronized (threadLock) {
+            // 重置计时器和标志
+            score = 0;
+            time = 0;
+            cycleTime = 0;
+            heroShootCycleTime = 0;
+            gameOverFlag = false;
+
+            // 清空所有列表
+            enemyAircrafts.clear();
+            heroBullets.clear();
+            enemyBullets.clear();
+            props.clear();
+
+            // Boss 相关状态重置
+            bossSpawnCount = 0;
+            bossIsActive = false;
+
+            // 重置英雄飞机
+            heroAircraft.reset();
+
+            // 游戏管理器重置
+            if (gameManager != null) {
+                gameManager.reset();
+            }
+
+            System.out.println("Game Reset!");
+        }
+    }
+
+    /**
+     * 恢复游戏（重新启动游戏线程）
+     */
+    public void resume() {
+        synchronized (threadLock) {
+            if (!mbLoop && (gameThread == null || !gameThread.isAlive())) {
+                mbLoop = true;
+                // 重新启动游戏线程
+                gameThread = new Thread(this);
+                gameThread.start();
+            }
+        }
+
+    }
+
+    /**
+     * 清理游戏资源
+     */
+    public void cleanup() {
+        synchronized (threadLock) {
+            mbLoop = false;  // 停止游戏循环
+            //等待线程完全停止
+            if (gameThread != null && gameThread.isAlive()){
+                try {
+                    gameThread.join(3000); //最多等待3秒
+                    if (gameThread.isAlive()) {
+                        System.err.println("Warning: Game thread did not stop!");
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+            // 清空所有列表
+            enemyAircrafts.clear();
+            heroBullets.clear();
+            enemyBullets.clear();
+            props.clear();
+
+            // 游戏管理器清理
+            if (gameManager != null) {
+                gameManager.cleanup();
+            }
+        }
+
+        System.out.println("Game Cleanup Complete!");
     }
 }
