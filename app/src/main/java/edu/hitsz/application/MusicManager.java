@@ -14,6 +14,7 @@ public class MusicManager {
     // 留声机 (长音频)
     private MediaPlayer bgmPlayer;
     private MediaPlayer bossBgmPlayer;
+    private boolean bossIsPlaying = false; // 记录当前播放的是哪首 BGM
 
     // 锤子 (短音效)
     private SoundPool soundPool;
@@ -70,16 +71,28 @@ public class MusicManager {
 
     public void playBossBGM() {
         if (isMusicOn && bossBgmPlayer != null) {
-            if (bgmPlayer.isPlaying()) bgmPlayer.pause(); // 暂停普通BGM [cite: 186]
+            if (bgmPlayer != null && bgmPlayer.isPlaying()) bgmPlayer.pause();
             bossBgmPlayer.start();
+            bossIsPlaying = true;
         }
     }
 
     public void stopBossBGM() {
         if (bossBgmPlayer != null && bossBgmPlayer.isPlaying()) {
             bossBgmPlayer.pause();
-            bossBgmPlayer.seekTo(0); // 重置到开头 [cite: 190]
-            playBGM(); // 恢复普通BGM
+            bossBgmPlayer.seekTo(0);
+            bossIsPlaying = false;
+            playBGM();
+        }
+    }
+
+    /** 暂停后恢复：根据暂停前的状态恢复对应 BGM */
+    public void resumeBGM() {
+        if (!isMusicOn) return;
+        if (bossIsPlaying) {
+            if (bossBgmPlayer != null && !bossBgmPlayer.isPlaying()) bossBgmPlayer.start();
+        } else {
+            if (bgmPlayer != null && !bgmPlayer.isPlaying()) bgmPlayer.start();
         }
     }
 
@@ -112,18 +125,21 @@ public class MusicManager {
         if (bossBgmPlayer != null && bossBgmPlayer.isPlaying()) bossBgmPlayer.pause();
     }
 
-    // 彻底释放资源
+    // 彻底释放资源（幂等：多次调用安全）
     public void releaseAll() {
         if (bgmPlayer != null) {
             bgmPlayer.stop();
             bgmPlayer.release();
+            bgmPlayer = null;
         }
         if (bossBgmPlayer != null) {
             bossBgmPlayer.stop();
             bossBgmPlayer.release();
+            bossBgmPlayer = null;
         }
         if (soundPool != null) {
             soundPool.release();
+            soundPool = null;
         }
     }
 }

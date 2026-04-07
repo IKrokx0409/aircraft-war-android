@@ -572,18 +572,29 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
     }
 
     /**
-     * 恢复游戏（重新启动游戏线程）
+     * 暂停游戏（停止游戏循环，暂停 BGM，不释放资源）
+     */
+    public void pause() {
+        mbLoop = false;
+        if (musicManager != null) {
+            musicManager.pauseBGM();
+        }
+    }
+
+    /**
+     * 恢复游戏（重新启动游戏线程，恢复 BGM）
      */
     public void resume() {
         synchronized (threadLock) {
             if (!mbLoop && (gameThread == null || !gameThread.isAlive())) {
                 mbLoop = true;
-                // 重新启动游戏线程
                 gameThread = new Thread(this);
                 gameThread.start();
+                if (musicManager != null) {
+                    musicManager.resumeBGM();
+                }
             }
         }
-
     }
 
     /**
@@ -615,6 +626,7 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
             }
             if (musicManager != null) {
                 musicManager.releaseAll();
+                musicManager = null; // 防止 surfaceDestroyed / onDestroy 重复释放
             }
         }
 
