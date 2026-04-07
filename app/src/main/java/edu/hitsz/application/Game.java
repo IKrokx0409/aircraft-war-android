@@ -18,6 +18,8 @@ import edu.hitsz.aircraft.*;
 import edu.hitsz.bullet.BaseBullet;
 import edu.hitsz.basic.AbstractFlyingObject;
 import edu.hitsz.prop.AbstractProp;
+import edu.hitsz.prop.BombListener;
+import edu.hitsz.prop.BombProp;
 import edu.hitsz.factory.BossFactory;
 import edu.hitsz.factory.EliteEnemyFactory;
 import edu.hitsz.factory.ElitePlusEnemyFactory;
@@ -35,7 +37,7 @@ import java.util.List;
 /**
  * 游戏主面板，游戏启动 (Android SurfaceView 重构版)
  */
-public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnable {
+public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnable, BombListener {
 
     private String gameMode = "single";
     private boolean soundEnabled = true;
@@ -404,13 +406,13 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
                     if (enemyAircraft.notValid()) {
                         if (enemyAircraft instanceof ElitePlusEnemy) {
                             score += 30;
-                            props.addAll(enemyAircraft.dropProps());
+                            addPropsWithListener(enemyAircraft.dropProps());
                         } else if (enemyAircraft instanceof EliteEnemy) {
                             score += 20;
-                            props.addAll(enemyAircraft.dropProps());
+                            addPropsWithListener(enemyAircraft.dropProps());
                         } else if (enemyAircraft instanceof BossEnemy) {
                             score += 100;
-                            props.addAll(enemyAircraft.dropProps());
+                            addPropsWithListener(enemyAircraft.dropProps());
                             bossIsActive = false;
 
                             if (musicManager != null) {
@@ -617,6 +619,60 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
         }
 
         System.out.println("Game Cleanup Complete!");
+    }
+
+    /**
+     * 将新道具加入列表，并为 BombProp 注册爆炸监听（观察者注册点）
+     */
+    private void addPropsWithListener(List<AbstractProp> newProps) {
+        for (AbstractProp prop : newProps) {
+            if (prop instanceof BombProp) {
+                ((BombProp) prop).setBombListener(this);
+            }
+        }
+        props.addAll(newProps);
+    }
+
+    /**
+     * 炸弹爆炸效果（BombListener 实现）：
+     * - 普通/精英敌机：立即消灭，获得对应分数
+     * - 超级精英敌机：扣除 50 点 HP；若因此死亡同样得分
+     * - Boss 敌机：不受影响
+     * - 所有敌机子弹：清除
+     */
+    @Override
+    public void onBombExplode() {
+        // 清除所有敌机子弹
+        for (BaseBullet bullet : enemyBullets) {
+            bullet.vanish();
+        }
+
+        // 处理各类敌机
+        for (AbstractEnemyAircraft enemy : enemyAircrafts) {
+            if (enemy.notValid()) continue;
+
+            if (enemy instanceof BossEnemy) {
+                // Boss 不受炸弹影响
+                continue;
+            } else if (enemy instanceof ElitePlusEnemy) {
+                // 超级精英：扣 50 HP
+                enemy.decreaseHp(50);
+                if (enemy.notValid()) {
+                    score += 30;
+                }
+            } else if (enemy instanceof EliteEnemy) {
+                enemy.vanish();
+                score += 20;
+            } else {
+                // MobEnemy
+                enemy.vanish();
+                score += 10;
+            }
+        }
+
+        if (musicManager != null) {
+            musicManager.playBombSound();
+        }
     }
 
     private void setEnemySpeedMultiplier(double multiplier) {
