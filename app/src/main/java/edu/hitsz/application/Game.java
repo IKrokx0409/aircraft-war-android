@@ -314,20 +314,10 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
                 });
             }
 
-            // 你的排行榜逻辑 (注意：Android中写文件需要修改DAO实现，这里先保留逻辑)
-            GameRecordDao dao = new GameRecordDaoImpl();
-            String playerName = "Player";
-            GameRecord newRecord = new GameRecord(playerName, this.score, new Date());
+            // 保存本局记录到沙箱文件
+            GameRecordDao dao = new GameRecordDaoImpl(getContext());
+            GameRecord newRecord = new GameRecord("Player", this.score, new Date(), this.difficulty);
             dao.addRecord(newRecord);
-
-            List<GameRecord> records = dao.getAllRecords();
-            records.sort(Comparator.comparingInt(GameRecord::getScore).reversed());
-
-            System.out.println("          ---RANKING LIST---         ");
-            int rank = 1;
-            for (GameRecord record : records) {
-                System.out.printf("rank%2d: %s, %6d, %s\n", rank++, record.getPlayerName(), record.getScore(), record.getFormattedTimestamp());
-            }
             return; //游戏结束后停止处理
         }
     }

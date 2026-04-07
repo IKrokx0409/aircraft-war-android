@@ -1,5 +1,7 @@
 package edu.hitsz.dao;
 
+import android.content.Context;
+
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -7,6 +9,13 @@ import java.util.List;
 public class GameRecordDaoImpl implements GameRecordDao {
 
     private static final String FILENAME = "records.dat";
+
+    private final File recordFile;
+
+    public GameRecordDaoImpl(Context context) {
+        // 使用 Android 沙箱路径：data/data/[包名]/files/records.dat
+        recordFile = new File(context.getFilesDir(), FILENAME);
+    }
 
     @Override
     public void addRecord(GameRecord record) {
@@ -17,12 +26,10 @@ public class GameRecordDaoImpl implements GameRecordDao {
 
     @Override
     public List<GameRecord> getAllRecords() {
-        File file = new File(FILENAME);
-        if (!file.exists()) {
+        if (!recordFile.exists()) {
             return new ArrayList<>();
         }
-
-        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(recordFile))) {
             return (List<GameRecord>) ois.readObject();
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
@@ -30,8 +37,17 @@ public class GameRecordDaoImpl implements GameRecordDao {
         }
     }
 
+    @Override
+    public void deleteRecord(int index) {
+        List<GameRecord> records = getAllRecords();
+        if (index >= 0 && index < records.size()) {
+            records.remove(index);
+            saveRecords(records);
+        }
+    }
+
     private void saveRecords(List<GameRecord> records) {
-        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(FILENAME))) {
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(recordFile))) {
             oos.writeObject(records);
         } catch (IOException e) {
             e.printStackTrace();

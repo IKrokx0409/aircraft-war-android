@@ -38,6 +38,11 @@
             android:name=".EndActivity"
             android:exported="true" />
 
+        <!-- 排行榜界面 -->
+        <activity
+            android:name=".RankingActivity"
+            android:exported="false" />
+
     </application>
 
 </manifest>

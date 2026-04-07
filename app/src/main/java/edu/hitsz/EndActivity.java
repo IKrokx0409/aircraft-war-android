@@ -1,5 +1,6 @@
 package edu.hitsz;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.TextView;
@@ -8,7 +9,7 @@ import androidx.appcompat.app.AppCompatActivity;
 public class EndActivity extends AppCompatActivity {
 
     private TextView tvScore;
-    private Button btnRestart, btnMainMenu, btnExit;
+    private Button btnRanking, btnRestart, btnMainMenu, btnExit;
     private int finalScore;
 
     // 定义返回结果常量
@@ -23,6 +24,7 @@ public class EndActivity extends AppCompatActivity {
 
         // 初始化组件
         tvScore = findViewById(R.id.tv_score);
+        btnRanking = findViewById(R.id.btn_ranking);
         btnRestart = findViewById(R.id.btn_restart);
         btnMainMenu = findViewById(R.id.btn_main_menu);
         btnExit = findViewById(R.id.btn_exit);
@@ -32,6 +34,11 @@ public class EndActivity extends AppCompatActivity {
 
         // 显示得分
         tvScore.setText(getString(R.string.final_score, finalScore));
+
+        // 查看排行榜按钮
+        btnRanking.setOnClickListener(v -> {
+            startActivity(new Intent(this, RankingActivity.class));
+        });
 
         // 重新开始按钮
         btnRestart.setOnClickListener(v -> {

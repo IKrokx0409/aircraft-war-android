@@ -5,4 +5,5 @@ import java.util.List;
 public interface GameRecordDao {
     void addRecord(GameRecord record);
     List<GameRecord> getAllRecords();
+    void deleteRecord(int index);
 }
