@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
@@ -49,7 +50,7 @@ public class MainActivity extends AppCompatActivity implements Game.OnGameEndLis
         gameContainer.addView(gameView);
 
         // 暂停按钮
-        Button btnPause = findViewById(R.id.btn_pause);
+        ImageButton btnPause = findViewById(R.id.btn_pause);
         btnPause.setOnClickListener(v -> showPauseDialog());
     }
 

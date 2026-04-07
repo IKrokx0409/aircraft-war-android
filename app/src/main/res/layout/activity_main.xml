@@ -10,17 +10,17 @@
         android:layout_height="match_parent" />
 
     <!-- 右上角暂停按钮 -->
-    <Button
+    <ImageButton
         android:id="@+id/btn_pause"
         android:layout_width="56dp"
         android:layout_height="56dp"
         android:layout_gravity="top|end"
         android:layout_margin="12dp"
-        android:text="||"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:textColor="#FFFFFF"
-        android:backgroundTint="#88000000"
-        android:elevation="8dp" />
+        android:src="@drawable/pause"
+        android:scaleType="fitCenter"
+        android:background="@android:color/transparent"
+        android:padding="8dp"
+        android:elevation="8dp"
+        android:contentDescription="暂停" />
 
 </FrameLayout>
