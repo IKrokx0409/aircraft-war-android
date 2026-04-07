@@ -111,10 +111,14 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
     private int score = 0;
     private int time = 0;
     private int cycleDuration = 600;
-    private int heroShootCycleDuration = 160; //改成每10帧发射一次
+    private int heroShootCycleDuration = 160;
     private int cycleTime = 0;
     private int heroShootCycleTime = 0;
     private boolean gameOverFlag = false;
+
+    /** 火力 buff 到期的系统时间戳（ms），-1 表示未激活 */
+    private static final int FIRE_BUFF_DURATION = 6000;
+    private long fireBuffEndTime = -1;
 
     // 在现有的成员变量中添加这些
     private Thread gameThread;  // ← 添加：保存游戏线程的引用
@@ -285,6 +289,11 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
             }
             shootAction();
         }
+        // 火力 buff 倒计时：到期时恢复直射
+        if (fireBuffEndTime > 0 && System.currentTimeMillis() >= fireBuffEndTime) {
+            fireBuffEndTime = -1;
+            heroAircraft.setStrategy(new edu.hitsz.strategy.DirectShoot());
+        }
         heroShootAction();
         bulletsMoveAction();
         aircraftsMoveAction();
@@ -440,10 +449,15 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
             if (heroAircraft.crash(prop)) {
                 prop.activate(heroAircraft);
 
-                if (prop.getClass().getSimpleName().equals("BombProp")) {
-                    musicManager.playBombSound(); // 炸弹爆炸声
+                if (prop instanceof edu.hitsz.prop.BombProp) {
+                    musicManager.playBombSound();
                 } else {
-                    musicManager.playGetSupplySound(); // 吃到加血或火力道具的音效
+                    musicManager.playGetSupplySound();
+                    // 火力道具：启动/重置 6s 倒计时
+                    if (prop instanceof edu.hitsz.prop.FireProp
+                            || prop instanceof edu.hitsz.prop.FirePlusProp) {
+                        fireBuffEndTime = System.currentTimeMillis() + FIRE_BUFF_DURATION;
+                    }
                 }
             }
         }
@@ -517,6 +531,16 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
             case "hard":   paint.setColor(Color.RED);    canvas.drawText("[HARD]",   x, y, paint); break;
             default:       paint.setColor(Color.YELLOW); canvas.drawText("[NORMAL]", x, y, paint); break;
         }
+        // 火力 buff 倒计时调试显示（确认功能后可删除）
+        if (fireBuffEndTime > 0) {
+            long remaining = fireBuffEndTime - System.currentTimeMillis();
+            if (remaining > 0) {
+                y += 60;
+                paint.setTextSize(40);
+                paint.setColor(Color.CYAN);
+                canvas.drawText("FIRE:" + (remaining / 1000) + "s", x, y, paint);
+            }
+        }
     }
 
     /**
@@ -540,6 +564,7 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
             // Boss 相关状态重置
             bossSpawnCount = 0;
             bossIsActive = false;
+            fireBuffEndTime = -1;
             applyDifficultySettings();
 
             // 重置英雄飞机
