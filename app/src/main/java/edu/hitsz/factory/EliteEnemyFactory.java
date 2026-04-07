@@ -12,6 +12,6 @@ public class EliteEnemyFactory extends EnemyFactory {
         return new EliteEnemy(
                 (int) (Math.random() * (AbstractFlyingObject.WINDOW_WIDTH - ImageManager.ELITE_ENEMY_IMAGE.getWidth())),
                 (int) (Math.random() * AbstractFlyingObject.WINDOW_HEIGHT * 0.05),
-                5, 5, 60);
+                (int) (5 * speedMultiplier), (int) (5 * speedMultiplier), 60);
     }
 }

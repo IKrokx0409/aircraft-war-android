@@ -12,6 +12,6 @@ public class MobEnemyFactory extends EnemyFactory {
         return new MobEnemy(
                 (int) (Math.random() * (AbstractFlyingObject.WINDOW_WIDTH - ImageManager.MOB_ENEMY_IMAGE.getWidth())),
                 (int) (Math.random() * AbstractFlyingObject.WINDOW_HEIGHT * 0.05),
-                0, 10, 30);
+                0, (int) (10 * speedMultiplier), 30);
     }
 }

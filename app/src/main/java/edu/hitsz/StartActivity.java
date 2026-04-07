@@ -47,21 +47,18 @@ public class StartActivity extends AppCompatActivity {
 
         // 单机模式按钮
         btnSingleMode.setOnClickListener(v -> {
-            Intent intent = new Intent(StartActivity.this, MainActivity.class);
+            Intent intent = new Intent(StartActivity.this, DifficultyActivity.class);
             intent.putExtra("mode", "single");
             intent.putExtra("soundEnabled", switchSound.isChecked());
             startActivity(intent);
-            //不调用 finish(), 这样 StartActivity 会留在栈中
-            //finish();
         });
 
         // 联机模式按钮
         btnMultiMode.setOnClickListener(v -> {
-            Intent intent = new Intent(StartActivity.this, MainActivity.class);
+            Intent intent = new Intent(StartActivity.this, DifficultyActivity.class);
             intent.putExtra("mode", "multi");
             intent.putExtra("soundEnabled", switchSound.isChecked());
             startActivity(intent);
-            // Toast.makeText(StartActivity.this, "联机功能开发中...", Toast.LENGTH_SHORT).show();
         });
     }
 

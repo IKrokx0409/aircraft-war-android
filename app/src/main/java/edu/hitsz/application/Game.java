@@ -18,11 +18,11 @@ import edu.hitsz.aircraft.*;
 import edu.hitsz.bullet.BaseBullet;
 import edu.hitsz.basic.AbstractFlyingObject;
 import edu.hitsz.prop.AbstractProp;
+import edu.hitsz.factory.BossFactory;
 import edu.hitsz.factory.EliteEnemyFactory;
+import edu.hitsz.factory.ElitePlusEnemyFactory;
 import edu.hitsz.factory.EnemyFactory;
 import edu.hitsz.factory.MobEnemyFactory;
-import edu.hitsz.factory.ElitePlusEnemyFactory;
-import edu.hitsz.factory.BossFactory;
 import edu.hitsz.dao.GameRecord;
 import edu.hitsz.dao.GameRecordDao;
 import edu.hitsz.dao.GameRecordDaoImpl;
@@ -37,29 +37,17 @@ import java.util.List;
  */
 public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnable {
 
-    // 在 Game 类中添加这些成员变量
     private String gameMode = "single";
     private boolean soundEnabled = true;
+    private String difficulty = "normal"; // "easy" | "normal" | "hard"
     private MusicManager musicManager;
 
-    // 添加 setter 方法（在构造方法后）
-    public void setGameMode(String mode) {
-        this.gameMode = mode;
-    }
-
-    public void setSoundEnabled(boolean enabled) {
-        this.soundEnabled = enabled;
-        // 可在此处控制游戏音效的启用/禁用
-        // 如果有 SoundManager，调用: SoundManager.getInstance().setEnabled(enabled);
-    }
-
-    public String getGameMode() {
-        return gameMode;
-    }
-
-    public boolean isSoundEnabled() {
-        return soundEnabled;
-    }
+    public void setGameMode(String mode) { this.gameMode = mode; }
+    public void setSoundEnabled(boolean enabled) { this.soundEnabled = enabled; }
+    public void setDifficulty(String difficulty) { this.difficulty = difficulty; }
+    public String getGameMode() { return gameMode; }
+    public boolean isSoundEnabled() { return soundEnabled; }
+    public String getDifficulty() { return difficulty; }
     private int backGroundTop = 0;
 
     // 游戏管理器
@@ -94,7 +82,7 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
     private final EnemyFactory mobEnemyFactory;
     private final EnemyFactory eliteEnemyFactory;
     private final EnemyFactory elitePlusEnemyFactory;
-    private final EnemyFactory bossFactory;
+    private final BossFactory bossFactory;
 
     /**
      * 时间间隔(ms)，控制刷新频率
@@ -108,11 +96,13 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
     private final List<AbstractProp> props;
 
     private int enemyMaxNumber = 5;
-    private double eliteProb = 0.3;
-    private double elitePlusProb = 0.15;
+
+    // Normal 基准概率（easy/normal 固定使用；hard 以此为起点动态增长）
+    private static final double BASE_ELITE_PROB      = 0.30;
+    private static final double BASE_ELITE_PLUS_PROB = 0.15;
 
     // Boss机相关状态
-    private final int bossScoreThreshold = 500;
+    private int bossScoreThreshold = 500; // easy忽略；normal=500；hard=300
     private int bossSpawnCount = 0;
     private boolean bossIsActive = false;
 
@@ -187,7 +177,7 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
             }
         }
         heroAircraft.reset(); //启动线程前，确保英雄机状态正确
-        // ImageManager.initImage(getContext());
+        applyDifficultySettings();
         mbLoop = true;
         gameThread = new Thread(this);
         gameThread.start(); // 启动游戏主线程
@@ -261,12 +251,31 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
 
     public void action() {
         time += timeInterval;
+
+        // Hard 模式：敌机召唤/射击周期 和 英雄射击周期 随时间加速
+        // cycleDuration：400ms → 最低 200ms（约 3.3 分钟达到下限）
+        // heroShootCycleDuration：160ms → 最低 60ms（约 3.3 分钟达到下限）
+        if ("hard".equals(difficulty)) {
+            cycleDuration = Math.max(400 - time / 1000, 200);
+            heroShootCycleDuration = Math.max(160 - time / 2000, 60);
+        }
+
         if (timeCountAndNewCycleJudge()) {
             if (enemyAircrafts.size() < enemyMaxNumber) {
+                double currentEliteProb;
+                double currentElitePlusProb;
+                if ("hard".equals(difficulty)) {
+                    // Hard 模式：精英概率随时间线性增长，每分钟约增加 0.1/0.05，分别上限 0.65/0.45
+                    currentEliteProb      = Math.min(BASE_ELITE_PROB      + time / 400000.0, 0.65);
+                    currentElitePlusProb  = Math.min(BASE_ELITE_PLUS_PROB + time / 600000.0, 0.45);
+                } else {
+                    currentEliteProb      = BASE_ELITE_PROB;
+                    currentElitePlusProb  = BASE_ELITE_PLUS_PROB;
+                }
                 double r = Math.random();
-                if (r < elitePlusProb) {
+                if (r < currentElitePlusProb) {
                     enemyAircrafts.add(elitePlusEnemyFactory.createEnemy());
-                } else if (r < eliteProb + elitePlusProb) {
+                } else if (r < currentEliteProb + currentElitePlusProb) {
                     enemyAircrafts.add(eliteEnemyFactory.createEnemy());
                 } else {
                     enemyAircrafts.add(mobEnemyFactory.createEnemy());
@@ -411,8 +420,13 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
                             score += 10;
                         }
 
-                        if (!bossIsActive && score / bossScoreThreshold > bossSpawnCount) {
-                            newEnemies.add(bossFactory.createEnemy());
+                        if (!bossIsActive && !"easy".equals(difficulty)
+                                && score / bossScoreThreshold > bossSpawnCount) {
+                            // Hard 模式：每波 Boss 血量递增（1000, 1500, 2000...）
+                            int bossHp = "hard".equals(difficulty)
+                                    ? 1000 + bossSpawnCount * 500
+                                    : 1000;
+                            newEnemies.add(bossFactory.createEnemy(bossHp));
                             bossIsActive = true;
                             bossSpawnCount++;
 
@@ -498,12 +512,19 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
     private void paintScoreAndLife(Canvas canvas) {
         int x = 30;
         int y = 80;
-        paint.setColor(Color.RED);
-        paint.setTextSize(60); // Android 字体大小用 px，数值需要调大
         paint.setFakeBoldText(true);
+        paint.setTextSize(60);
+        paint.setColor(Color.RED);
         canvas.drawText("SCORE:" + this.score, x, y, paint);
-        y = y + 70;
+        y += 70;
         canvas.drawText("LIFE:" + this.heroAircraft.getHp(), x, y, paint);
+        y += 70;
+        paint.setTextSize(44);
+        switch (difficulty) {
+            case "easy":   paint.setColor(Color.GREEN);  canvas.drawText("[EASY]",   x, y, paint); break;
+            case "hard":   paint.setColor(Color.RED);    canvas.drawText("[HARD]",   x, y, paint); break;
+            default:       paint.setColor(Color.YELLOW); canvas.drawText("[NORMAL]", x, y, paint); break;
+        }
     }
 
     /**
@@ -527,6 +548,7 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
             // Boss 相关状态重置
             bossSpawnCount = 0;
             bossIsActive = false;
+            applyDifficultySettings();
 
             // 重置英雄飞机
             heroAircraft.reset();
@@ -595,5 +617,50 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
         }
 
         System.out.println("Game Cleanup Complete!");
+    }
+
+    private void setEnemySpeedMultiplier(double multiplier) {
+        mobEnemyFactory.setSpeedMultiplier(multiplier);
+        eliteEnemyFactory.setSpeedMultiplier(multiplier);
+        elitePlusEnemyFactory.setSpeedMultiplier(multiplier);
+    }
+
+    /**
+     * 根据当前难度初始化静态参数：Boss 阈值、最大敌机数、背景图。
+     * 动态概率/发射率在 action() 中实时计算。
+     */
+    private void applyDifficultySettings() {
+        switch (difficulty) {
+            case "easy":
+                bossScoreThreshold = 500;   // easy 不会触发 Boss，占位
+                enemyMaxNumber = 7;
+                cycleDuration = 700;        // 敌机召唤/射击较慢
+                heroShootCycleDuration = 160;
+                setEnemySpeedMultiplier(1.0);
+                break;
+            case "hard":
+                bossScoreThreshold = 300;
+                enemyMaxNumber = 4;
+                cycleDuration = 400;        // 初始较快，action() 中动态递减至 200ms
+                heroShootCycleDuration = 160;
+                setEnemySpeedMultiplier(1.6);
+                break;
+            default: // normal
+                bossScoreThreshold = 500;
+                enemyMaxNumber = 5;
+                cycleDuration = 450;        // 比原来 600ms 明显加快，固定不变
+                heroShootCycleDuration = 160;
+                setEnemySpeedMultiplier(1.3);
+                break;
+        }
+
+        // 加载对应难度背景图
+        ImageManager.loadBackground(getContext(), difficulty);
+
+        // 若屏幕已知尺寸（reset 时），立刻缩放背景
+        if (screenWidth > 0 && screenHeight > 0 && ImageManager.BACKGROUND_IMAGE != null) {
+            ImageManager.BACKGROUND_IMAGE = Bitmap.createScaledBitmap(
+                    ImageManager.BACKGROUND_IMAGE, screenWidth, screenHeight, true);
+        }
     }
 }

@@ -48,13 +48,26 @@ public class ImageManager {
     public static Bitmap BOSS_ENEMY_IMAGE;
 
     /**
+     * 根据难度加载对应背景图：easy→bg，normal→bg2，hard→bg4
+     */
+    public static void loadBackground(Context context, String difficulty) {
+        int resId;
+        switch (difficulty) {
+            case "easy":  resId = R.drawable.bg;  break;
+            case "hard":  resId = R.drawable.bg4; break;
+            default:      resId = R.drawable.bg2; break; // normal
+        }
+        BACKGROUND_IMAGE = BitmapFactory.decodeResource(context.getResources(), resId);
+    }
+
+    /**
      * Android 加载资源必须依赖 Context，所以不能用原本的 static 代码块
      * 请在游戏启动时（例如 SurfaceView 的 surfaceCreated 中）调用此方法
      */
     public static void initImage(Context context) {
 
-        // 使用 BitmapFactory 从 res/drawable 中加载 Bitmap
-        BACKGROUND_IMAGE = BitmapFactory.decodeResource(context.getResources(), R.drawable.bg);
+        // 背景由 loadBackground 单独管理，此处不加载
+        BACKGROUND_IMAGE = null;
 
         HERO_IMAGE = BitmapFactory.decodeResource(context.getResources(), R.drawable.hero);
         MOB_ENEMY_IMAGE = BitmapFactory.decodeResource(context.getResources(), R.drawable.mob);

@@ -23,6 +23,11 @@
             </intent-filter>
         </activity>
 
+        <!-- 难度选择界面 -->
+        <activity
+            android:name=".DifficultyActivity"
+            android:exported="false" />
+
         <!-- 游戏界面 -->
         <activity
             android:name=".MainActivity"

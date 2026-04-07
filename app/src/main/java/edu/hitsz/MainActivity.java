@@ -19,10 +19,12 @@ public class MainActivity extends AppCompatActivity implements Game.OnGameEndLis
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // 获取来自 StartActivity 的参数
+        // 获取来自 DifficultyActivity 的参数
         Intent intent = getIntent();
         String gameMode = intent.getStringExtra("mode");
         boolean soundEnabled = intent.getBooleanExtra("soundEnabled", true);
+        String difficulty = intent.getStringExtra("difficulty");
+        if (difficulty == null) difficulty = "normal";
 
         // 根据模式创建对应的 GameManager
         if ("multi".equals(gameMode)) {
@@ -39,6 +41,7 @@ public class MainActivity extends AppCompatActivity implements Game.OnGameEndLis
         gameView = new Game(this, soundEnabled);
         gameView.setGameManager(gameManager);
         gameView.setGameMode(gameMode != null ? gameMode : "single");
+        gameView.setDifficulty(difficulty);
         gameView.setSoundEnabled(soundEnabled);
         gameView.setOnGameEndListener(this);
 
