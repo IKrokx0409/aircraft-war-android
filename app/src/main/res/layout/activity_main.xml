@@ -3,13 +3,11 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- 游戏 SurfaceView 容器，由 MainActivity 代码动态添加 -->
     <FrameLayout
         android:id="@+id/game_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <!-- 右上角暂停按钮 -->
     <ImageButton
         android:id="@+id/btn_pause"
         android:layout_width="56dp"

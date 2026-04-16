@@ -7,18 +7,20 @@
     android:padding="20dp">
 
     <!-- 游戏结束标题 -->
+
+    <!-- 显示得分 -->
+
     <TextView
         android:id="@+id/tv_game_over"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="游戏结束"
-        android:textSize="48sp"
-        android:textStyle="bold"
-        android:textColor="#FF0000"
+        android:layout_marginBottom="30dp"
         android:gravity="center"
-        android:layout_marginBottom="30dp" />
+        android:text="游戏结束"
+        android:textColor="#FF0000"
+        android:textSize="48sp"
+        android:textStyle="bold" />
 
-    <!-- 显示得分 -->
     <TextView
         android:id="@+id/tv_score"
         android:layout_width="match_parent"

@@ -13,7 +13,6 @@ public class GameRecordDaoImpl implements GameRecordDao {
     private final File recordFile;
 
     public GameRecordDaoImpl(Context context) {
-        // 使用 Android 沙箱路径：data/data/[包名]/files/records.dat
         recordFile = new File(context.getFilesDir(), FILENAME);
     }
 

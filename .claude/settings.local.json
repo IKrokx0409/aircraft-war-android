@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls -la /d/AndroidStudioProjects/AircraftWar2/app/src/main/res/drawable/*.png)"
+    ]
+  }
+}

@@ -61,7 +61,7 @@ public class EndActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        // ✅ 如果用户按返回键，默认作为"返回主菜单"处理
+        //如果用户按返回键，作为返回主菜单处理
         setResult(RESULT_MENU);
         super.onBackPressed();
     }
