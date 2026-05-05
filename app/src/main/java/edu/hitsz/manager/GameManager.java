@@ -28,4 +28,14 @@ public interface GameManager {
      * 获取游戏模式名称
      */
     String getModeName();
+
+    /**
+     * 发送当前得分给对手（仅联机模式有效，单机模式空实现）
+     */
+    void sendScore(int score);
+
+    /**
+     * 通知对手自己已死亡并发送最终分数（仅联机模式有效）
+     */
+    void sendGameOver(int score);
 }

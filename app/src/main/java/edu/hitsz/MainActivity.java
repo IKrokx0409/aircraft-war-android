@@ -11,7 +11,9 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import edu.hitsz.application.Game;
 import edu.hitsz.manager.GameManager;
+import edu.hitsz.manager.OnlineGameManager;
 import edu.hitsz.manager.SinglePlayerManager;
+import edu.hitsz.network.SocketClient;
 
 public class MainActivity extends AppCompatActivity implements Game.OnGameEndListener {
 
@@ -24,24 +26,65 @@ public class MainActivity extends AppCompatActivity implements Game.OnGameEndLis
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // 获取来自 DifficultyActivity 的参数
         Intent intent = getIntent();
         String gameMode = intent.getStringExtra("mode");
         boolean soundEnabled = intent.getBooleanExtra("soundEnabled", true);
         String difficulty = intent.getStringExtra("difficulty");
         if (difficulty == null) difficulty = "normal";
+        String roomId = intent.getStringExtra("roomId");
 
-        // 根据模式创建对应的 GameManager
-        if ("multi".equals(gameMode)) {
+        if ("online".equals(gameMode) && roomId != null) {
+            // 联机模式
+            OnlineGameManager onlineMgr = new OnlineGameManager(roomId);
+            gameManager = onlineMgr;
+            gameManager.initialize();
+
+            onlineMgr.getClient().connect(roomId, new SocketClient.MessageCallback() {
+                @Override
+                public void onWaiting() {
+                    Toast.makeText(MainActivity.this, "等待对手加入...", Toast.LENGTH_LONG).show();
+                }
+
+                @Override
+                public void onStart() {
+                    Toast.makeText(MainActivity.this, "对手已加入，开始对战！", Toast.LENGTH_SHORT).show();
+                }
+
+                @Override
+                public void onOpponentScore(int score) {
+                    if (gameView != null) gameView.updateOpponentScore(score);
+                }
+
+                @Override
+                public void onOpponentGameOver(int score) {
+                    if (gameView != null) gameView.setOpponentGameOver(score);
+                }
+
+                @Override
+                public void onOpponentDisconnect() {
+                    if (gameView != null) gameView.onOpponentDisconnect();
+                    Toast.makeText(MainActivity.this, "对手已断线", Toast.LENGTH_SHORT).show();
+                }
+
+                @Override
+                public void onError(String msg) {
+                    Toast.makeText(MainActivity.this, msg, Toast.LENGTH_LONG).show();
+                }
+            });
+        } else if ("multi".equals(gameMode)) {
+            // 旧的 multi 标记（无 roomId，容错处理）
             Toast.makeText(this, "联机模式开发中...", Toast.LENGTH_SHORT).show();
+            gameManager = new SinglePlayerManager();
+            gameManager.initialize();
+        } else {
+            // 单机模式
+            gameManager = new SinglePlayerManager();
+            gameManager.initialize();
         }
-        gameManager = new SinglePlayerManager();
-        gameManager.initialize();
 
-        // 创建游戏视图并加入容器
         gameView = new Game(this, soundEnabled);
         gameView.setGameManager(gameManager);
-        gameView.setGameMode(gameMode != null ? gameMode : "single");
+        gameView.setGameMode("online".equals(gameMode) ? "online" : "single");
         gameView.setDifficulty(difficulty);
         gameView.setSoundEnabled(soundEnabled);
         gameView.setOnGameEndListener(this);
@@ -49,7 +92,6 @@ public class MainActivity extends AppCompatActivity implements Game.OnGameEndLis
         FrameLayout gameContainer = findViewById(R.id.game_container);
         gameContainer.addView(gameView);
 
-        // 暂停按钮
         ImageButton btnPause = findViewById(R.id.btn_pause);
         btnPause.setOnClickListener(v -> showPauseDialog());
     }
@@ -105,12 +147,10 @@ public class MainActivity extends AppCompatActivity implements Game.OnGameEndLis
 
         if (requestCode == REQUEST_GAME_END) {
             if (resultCode == EndActivity.RESULT_RESTART) {
-                // 重新开始：同难度，无需回到选择界面
                 gameView.reset();
                 gameView.resume();
 
             } else if (resultCode == EndActivity.RESULT_MENU) {
-                // 返回主菜单：回到 StartActivity（选择单机/联机界面）
                 gameView.cleanup();
                 navigateToStart();
 

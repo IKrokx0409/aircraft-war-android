@@ -109,6 +109,8 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
     private boolean bossIsActive = false;
 
     private int score = 0;
+    private volatile int opponentScore = 0;
+    private volatile boolean opponentGameOver = false;
     private int time = 0;
     private int cycleDuration = 600;
     private int heroShootCycleDuration = 160;
@@ -303,6 +305,9 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
 
         // 游戏结束检查
         if (time > 100 && heroAircraft.getHp() <= 0) { //只在游戏运行一小段时间后才检查（避免刚启动就结束）
+            if (gameManager != null && gameManager.isOnline()) {
+                gameManager.sendGameOver(score);
+            }
             mbLoop = false; // 停止主循环
             gameOverFlag = true;
             System.out.println("Game Over!");
@@ -382,6 +387,7 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
     }
 
     private void crashCheckAction() {
+        int scoreBefore = score;
         List<AbstractEnemyAircraft> newEnemies = new LinkedList<>();
 
         for (BaseBullet bullet : enemyBullets) {
@@ -462,6 +468,10 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
             }
         }
         enemyAircrafts.addAll(newEnemies);
+
+        if (gameManager != null && gameManager.isOnline() && score != scoreBefore) {
+            gameManager.sendScore(score);
+        }
     }
 
     private void postProcessAction() {
@@ -531,7 +541,7 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
             case "hard":   paint.setColor(Color.RED);    canvas.drawText("[HARD]",   x, y, paint); break;
             default:       paint.setColor(Color.YELLOW); canvas.drawText("[NORMAL]", x, y, paint); break;
         }
-        // 火力 buff 倒计时调试显示（确认功能后可删除）
+        // 火力 buff 倒计时显示
         if (fireBuffEndTime > 0) {
             long remaining = fireBuffEndTime - System.currentTimeMillis();
             if (remaining > 0) {
@@ -540,6 +550,14 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
                 paint.setColor(Color.CYAN);
                 canvas.drawText("FIRE:" + (remaining / 1000) + "s", x, y, paint);
             }
+        }
+
+        // 联机对手分数显示
+        if (gameManager != null && gameManager.isOnline()) {
+            paint.setTextSize(50);
+            paint.setColor(opponentGameOver ? Color.GRAY : Color.CYAN);
+            canvas.drawText("OPPONENT:" + opponentScore
+                    + (opponentGameOver ? "(DEAD)" : ""), screenWidth - 500, 80, paint);
         }
     }
 
@@ -745,5 +763,18 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
             ImageManager.BACKGROUND_IMAGE = Bitmap.createScaledBitmap(
                     ImageManager.BACKGROUND_IMAGE, screenWidth, screenHeight, true);
         }
+    }
+
+    public void updateOpponentScore(int score) {
+        this.opponentScore = score;
+    }
+
+    public void setOpponentGameOver(int score) {
+        this.opponentScore = score;
+        this.opponentGameOver = true;
+    }
+
+    public void onOpponentDisconnect() {
+        this.opponentGameOver = true;
     }
 }

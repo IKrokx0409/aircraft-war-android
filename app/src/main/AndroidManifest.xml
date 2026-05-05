@@ -47,6 +47,11 @@
             android:name=".RankingActivity"
             android:exported="false" />
 
+        <!-- 联机房间界面 -->
+        <activity
+            android:name=".RoomActivity"
+            android:exported="false" />
+
     </application>
 
 </manifest>

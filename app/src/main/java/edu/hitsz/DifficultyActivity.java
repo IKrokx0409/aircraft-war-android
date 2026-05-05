@@ -33,10 +33,18 @@ public class DifficultyActivity extends AppCompatActivity {
     }
 
     private void launchGame(String gameMode, boolean soundEnabled, String difficulty) {
-        Intent intent = new Intent(this, MainActivity.class);
-        intent.putExtra("mode", gameMode);
-        intent.putExtra("soundEnabled", soundEnabled);
-        intent.putExtra("difficulty", difficulty);
-        startActivity(intent);
+        if ("multi".equals(gameMode)) {
+            Intent intent = new Intent(this, RoomActivity.class);
+            intent.putExtra("mode", gameMode);
+            intent.putExtra("soundEnabled", soundEnabled);
+            intent.putExtra("difficulty", difficulty);
+            startActivity(intent);
+        } else {
+            Intent intent = new Intent(this, MainActivity.class);
+            intent.putExtra("mode", gameMode);
+            intent.putExtra("soundEnabled", soundEnabled);
+            intent.putExtra("difficulty", difficulty);
+            startActivity(intent);
+        }
     }
 }

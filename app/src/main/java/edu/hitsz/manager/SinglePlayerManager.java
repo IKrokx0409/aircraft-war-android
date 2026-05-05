@@ -29,4 +29,12 @@ public class SinglePlayerManager implements GameManager {
     public String getModeName() {
         return "single";
     }
+
+    @Override
+    public void sendScore(int score) {
+    }
+
+    @Override
+    public void sendGameOver(int score) {
+    }
 }
