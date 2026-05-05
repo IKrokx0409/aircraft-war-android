@@ -10,11 +10,12 @@ import edu.hitsz.server.model.GameRecord;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class RecordHandler implements HttpHandler {
 
-    private final Map<String, List<GameRecord>> records = new HashMap<>();
+    private final Map<String, List<GameRecord>> records = new ConcurrentHashMap<>();
     private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
     @Override
@@ -56,9 +57,10 @@ public class RecordHandler implements HttpHandler {
         if (difficulty == null) difficulty = "normal";
 
         List<GameRecord> list = records.getOrDefault(difficulty, Collections.emptyList());
-        list.sort(Comparator.comparingInt(GameRecord::getScore).reversed());
+        List<GameRecord> sorted = new ArrayList<>(list);
+        sorted.sort(Comparator.comparingInt(GameRecord::getScore).reversed());
 
-        String json = gson.toJson(list);
+        String json = gson.toJson(sorted);
         byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
         exchange.getResponseHeaders().set("Content-Type", "application/json; charset=utf-8");
         exchange.sendResponseHeaders(200, bytes.length);
@@ -73,7 +75,8 @@ public class RecordHandler implements HttpHandler {
         if (record.getPlayerName() == null) record.setPlayerName("Unknown");
         record.setTimestamp(System.currentTimeMillis());
 
-        records.computeIfAbsent(record.getDifficulty(), k -> new ArrayList<>()).add(record);
+        records.computeIfAbsent(record.getDifficulty(),
+                k -> Collections.synchronizedList(new ArrayList<>())).add(record);
 
         String json = "{\"success\":true}";
         byte[] bytes = json.getBytes(StandardCharsets.UTF_8);

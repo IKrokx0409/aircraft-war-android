@@ -2,6 +2,7 @@ package edu.hitsz.dao;
 
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -25,6 +26,7 @@ import okhttp3.Response;
 
 public class GameRecordDaoCloud implements GameRecordDao {
 
+    private static final String TAG = "GameRecordDaoCloud";
     private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
 
     private final OkHttpClient client = new OkHttpClient.Builder()
@@ -68,7 +70,8 @@ public class GameRecordDaoCloud implements GameRecordDao {
                         .post(body)
                         .build();
                 client.newCall(req).execute().close();
-            } catch (IOException ignored) {
+            } catch (IOException e) {
+                Log.e(TAG, "addRecord failed: " + e.getMessage(), e);
             }
         }).start();
     }
@@ -112,7 +115,8 @@ public class GameRecordDaoCloud implements GameRecordDao {
                         .delete()
                         .build();
                 client.newCall(req).execute().close();
-            } catch (IOException ignored) {
+            } catch (IOException e) {
+                Log.e(TAG, "deleteRecord failed: " + e.getMessage(), e);
             }
         }).start();
     }

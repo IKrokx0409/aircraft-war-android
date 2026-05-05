@@ -5,6 +5,7 @@ import edu.hitsz.EndActivity;  // ← 添加这行
 import edu.hitsz.manager.GameManager;  // ← 添加这行
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -329,8 +330,9 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
                 });
             }
 
-            // 保存本局记录到沙箱文件
-            GameRecord newRecord = new GameRecord("Player", this.score, new Date(), this.difficulty);
+            // 保存本局记录（本地 + 云端），使用持久化玩家 ID 区分不同设备
+            String playerName = getPlayerName();
+            GameRecord newRecord = new GameRecord(playerName, this.score, new Date(), this.difficulty);
             GameRecordDao dao = new GameRecordDaoImpl(getContext());
             dao.addRecord(newRecord);
 
@@ -783,5 +785,15 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
 
     public void onOpponentDisconnect() {
         this.opponentGameOver = true;
+    }
+
+    private String getPlayerName() {
+        SharedPreferences prefs = getContext().getSharedPreferences("game_prefs", Context.MODE_PRIVATE);
+        String id = prefs.getString("player_id", null);
+        if (id == null) {
+            id = String.format("%04d", (int) (Math.random() * 10000));
+            prefs.edit().putString("player_id", id).apply();
+        }
+        return "Player_" + id;
     }
 }
