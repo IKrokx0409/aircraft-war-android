@@ -27,6 +27,7 @@ import edu.hitsz.factory.EnemyFactory;
 import edu.hitsz.factory.MobEnemyFactory;
 import edu.hitsz.dao.GameRecord;
 import edu.hitsz.dao.GameRecordDao;
+import edu.hitsz.dao.GameRecordDaoCloud;
 import edu.hitsz.dao.GameRecordDaoImpl;
 
 import java.util.Date;
@@ -329,9 +330,15 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
             }
 
             // 保存本局记录到沙箱文件
-            GameRecordDao dao = new GameRecordDaoImpl(getContext());
             GameRecord newRecord = new GameRecord("Player", this.score, new Date(), this.difficulty);
+            GameRecordDao dao = new GameRecordDaoImpl(getContext());
             dao.addRecord(newRecord);
+
+            // 联机模式额外上传到云端
+            if (gameManager != null && gameManager.isOnline()) {
+                GameRecordDao cloudDao = new GameRecordDaoCloud();
+                cloudDao.addRecord(newRecord);
+            }
             return; //游戏结束后停止处理
         }
     }
