@@ -2,11 +2,13 @@ package edu.hitsz;
 
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.FrameLayout;
 import android.widget.Toast;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
 import edu.hitsz.application.Game;
@@ -19,7 +21,23 @@ public class MainActivity extends AppCompatActivity implements Game.OnGameEndLis
 
     private Game gameView;
     private GameManager gameManager;
-    private static final int REQUEST_GAME_END = 1001;
+    private String opponentName = "对手";
+
+    private final ActivityResultLauncher<Intent> gameEndLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == EndActivity.RESULT_RESTART) {
+                    gameView.reset();
+                    gameView.resume();
+                } else if (result.getResultCode() == EndActivity.RESULT_MENU) {
+                    gameView.cleanup();
+                    navigateToStart();
+                } else if (result.getResultCode() == EndActivity.RESULT_EXIT) {
+                    gameView.cleanup();
+                    finishAffinity();
+                }
+            }
+    );
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,28 +45,23 @@ public class MainActivity extends AppCompatActivity implements Game.OnGameEndLis
         setContentView(R.layout.activity_main);
 
         Intent intent = getIntent();
-        String gameMode = intent.getStringExtra("mode");
+        String gameMode   = intent.getStringExtra("mode");
         boolean soundEnabled = intent.getBooleanExtra("soundEnabled", true);
         String difficulty = intent.getStringExtra("difficulty");
         if (difficulty == null) difficulty = "normal";
-        String roomId = intent.getStringExtra("roomId");
 
-        if ("online".equals(gameMode) && roomId != null) {
-            // 联机模式
-            OnlineGameManager onlineMgr = new OnlineGameManager(roomId);
+        if ("online".equals(gameMode) && OnlineGameManager.pending != null) {
+            opponentName = intent.getStringExtra("opponentName") != null
+                    ? intent.getStringExtra("opponentName") : "对手";
+
+            OnlineGameManager onlineMgr = OnlineGameManager.pending;
+            OnlineGameManager.pending = null;
             gameManager = onlineMgr;
-            gameManager.initialize();
 
-            onlineMgr.getClient().connect(roomId, new SocketClient.MessageCallback() {
-                @Override
-                public void onWaiting() {
-                    Toast.makeText(MainActivity.this, "等待对手加入...", Toast.LENGTH_LONG).show();
-                }
-
-                @Override
-                public void onStart() {
-                    Toast.makeText(MainActivity.this, "对手已加入，开始对战！", Toast.LENGTH_SHORT).show();
-                }
+            onlineMgr.setCallback(new SocketClient.MessageCallback() {
+                @Override public void onWaiting() {}
+                @Override public void onStart()   {}
+                @Override public void onOpponentName(String name) {}
 
                 @Override
                 public void onOpponentScore(int score) {
@@ -71,13 +84,12 @@ public class MainActivity extends AppCompatActivity implements Game.OnGameEndLis
                     Toast.makeText(MainActivity.this, msg, Toast.LENGTH_LONG).show();
                 }
             });
+
         } else if ("multi".equals(gameMode)) {
-            // 旧的 multi 标记（无 roomId，容错处理）
             Toast.makeText(this, "联机模式开发中...", Toast.LENGTH_SHORT).show();
             gameManager = new SinglePlayerManager();
             gameManager.initialize();
         } else {
-            // 单机模式
             gameManager = new SinglePlayerManager();
             gameManager.initialize();
         }
@@ -96,72 +108,48 @@ public class MainActivity extends AppCompatActivity implements Game.OnGameEndLis
         btnPause.setOnClickListener(v -> showPauseDialog());
     }
 
-    // ==========================================
-    // 暂停对话框
-    // ==========================================
-
     private void showPauseDialog() {
         gameView.pause();
-
-        String[] options = {"继续", "重新开始", "回到主界面", "退出游戏"};
-
+        boolean online = gameManager != null && gameManager.isOnline();
+        String[] options = online
+                ? new String[]{"继续", "回到主界面", "退出游戏"}
+                : new String[]{"继续", "重新开始", "回到主界面", "退出游戏"};
         new AlertDialog.Builder(this)
                 .setTitle("游戏暂停")
                 .setCancelable(false)
                 .setItems(options, (dialog, which) -> {
-                    switch (which) {
-                        case 0: // 继续
-                            gameView.resume();
-                            break;
-                        case 1: // 重新开始（保持当前难度）
-                            gameView.reset();
-                            gameView.resume();
-                            break;
-                        case 2: // 回到主界面（StartActivity）
-                            gameView.cleanup();
-                            navigateToStart();
-                            break;
-                        case 3: // 退出游戏
-                            gameView.cleanup();
-                            finishAffinity();
-                            break;
+                    if (online) {
+                        switch (which) {
+                            case 0: gameView.resume(); break;
+                            case 1: gameView.cleanup(); navigateToStart(); break;
+                            case 2: gameView.cleanup(); finishAffinity(); break;
+                        }
+                    } else {
+                        switch (which) {
+                            case 0: gameView.resume(); break;
+                            case 1: gameView.reset(); gameView.resume(); break;
+                            case 2: gameView.cleanup(); navigateToStart(); break;
+                            case 3: gameView.cleanup(); finishAffinity(); break;
+                        }
                     }
                 })
                 .show();
     }
 
-    // ==========================================
-    // 游戏结束回调
-    // ==========================================
-
     @Override
-    public void onGameEnd(int finalScore) {
+    public void onGameEnd(int myScore, int opponentScore, boolean isOnline) {
+        SharedPreferences prefs = getSharedPreferences(LoginActivity.PREF_FILE, MODE_PRIVATE);
+        String myName = prefs.getString(LoginActivity.KEY_NAME, "我");
+
         Intent intent = new Intent(MainActivity.this, EndActivity.class);
-        intent.putExtra("score", finalScore);
-        startActivityForResult(intent, REQUEST_GAME_END);
+        intent.putExtra("score", myScore);
+        intent.putExtra("myName", myName);
+        intent.putExtra("opponentScore", opponentScore);
+        intent.putExtra("opponentName", opponentName);
+        intent.putExtra("isOnline", isOnline);
+        gameEndLauncher.launch(intent);
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        if (requestCode == REQUEST_GAME_END) {
-            if (resultCode == EndActivity.RESULT_RESTART) {
-                gameView.reset();
-                gameView.resume();
-
-            } else if (resultCode == EndActivity.RESULT_MENU) {
-                gameView.cleanup();
-                navigateToStart();
-
-            } else if (resultCode == EndActivity.RESULT_EXIT) {
-                gameView.cleanup();
-                finishAffinity();
-            }
-        }
-    }
-
-    /** 清空回退栈，返回 StartActivity */
     private void navigateToStart() {
         Intent intent = new Intent(this, StartActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
@@ -169,15 +157,9 @@ public class MainActivity extends AppCompatActivity implements Game.OnGameEndLis
         finish();
     }
 
-    // ==========================================
-    // 生命周期
-    // ==========================================
-
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (gameView != null) {
-            gameView.cleanup();
-        }
+        if (gameView != null) gameView.cleanup();
     }
 }

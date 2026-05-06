@@ -16,16 +16,21 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AircraftWar">
 
-        <!-- 起始界面 (启动页面) - 单实例模式 -->
+        <!-- 登录界面 (启动页面) -->
         <activity
-            android:name=".StartActivity"
-            android:exported="true"
-            android:launchMode="singleTask">
+            android:name=".LoginActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- 起始界面 - 单实例模式，供游戏结束后清栈返回 -->
+        <activity
+            android:name=".StartActivity"
+            android:exported="false"
+            android:launchMode="singleTask" />
 
         <!-- 难度选择界面 -->
         <activity

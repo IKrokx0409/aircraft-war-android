@@ -13,6 +13,7 @@ import com.google.gson.JsonSerializer;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -78,7 +79,7 @@ public class GameRecordDaoCloud implements GameRecordDao {
 
     @Override
     public List<GameRecord> getAllRecords() {
-        throw new UnsupportedOperationException("Use requestAllRecords(difficulty) for async loading");
+        return Collections.emptyList();
     }
 
     public void requestAllRecords(String difficulty) {

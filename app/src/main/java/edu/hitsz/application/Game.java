@@ -1,8 +1,7 @@
 package edu.hitsz.application;
 
-import android.content.Intent;  // ← 添加这行
-import edu.hitsz.EndActivity;  // ← 添加这行
-import edu.hitsz.manager.GameManager;  // ← 添加这行
+import edu.hitsz.LoginActivity;
+import edu.hitsz.manager.GameManager;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -32,7 +31,6 @@ import edu.hitsz.dao.GameRecordDaoCloud;
 import edu.hitsz.dao.GameRecordDaoImpl;
 
 import java.util.Date;
-import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -62,7 +60,7 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
 
     // 回调接口定义
     public interface OnGameEndListener {
-        void onGameEnd(int score);
+        void onGameEnd(int myScore, int opponentScore, boolean isOnline);
     }
 
     // 设置游戏管理器
@@ -79,7 +77,7 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
     private SurfaceHolder surfaceHolder;
     private Canvas canvas;
     private Paint paint;
-    private boolean mbLoop = false; // 控制绘制线程的标志位
+    private volatile boolean mbLoop = false; // 控制绘制线程的标志位
     private int screenWidth;
     private int screenHeight;
 
@@ -119,6 +117,9 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
     private int cycleTime = 0;
     private int heroShootCycleTime = 0;
     private boolean gameOverFlag = false;
+    private volatile boolean iDied = false;
+    private final java.util.concurrent.atomic.AtomicBoolean gameEndTriggered =
+            new java.util.concurrent.atomic.AtomicBoolean(false);
 
     /** 火力 buff 到期的系统时间戳（ms），-1 表示未激活 */
     private static final int FIRE_BUFF_DURATION = 6000;
@@ -262,6 +263,14 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
     public void action() {
         time += timeInterval;
 
+        // 联机模式：本地玩家已死，等待对手完赛后再结束
+        if (iDied) {
+            if (opponentGameOver) {
+                doEndGame();
+            }
+            return;
+        }
+
         // Hard 模式：敌机召唤/射击周期 和 英雄射击周期 随时间加速
         // cycleDuration：400ms → 最低 200ms（约 3.3 分钟达到下限）
         // heroShootCycleDuration：160ms → 最低 60ms（约 3.3 分钟达到下限）
@@ -305,43 +314,45 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
         propsMoveAction();
         postProcessAction();
 
-        // 游戏结束检查
-        if (time > 100 && heroAircraft.getHp() <= 0) { //只在游戏运行一小段时间后才检查（避免刚启动就结束）
-            if (gameManager != null && gameManager.isOnline()) {
-                gameManager.sendGameOver(score);
-            }
-            mbLoop = false; // 停止主循环
+        // 游戏结束检查（只在运行一小段时间后检查，避免刚启动就结束）
+        if (time > 100 && heroAircraft.getHp() <= 0) {
+            iDied = true;
             gameOverFlag = true;
             System.out.println("Game Over!");
 
             if (musicManager != null) {
-                musicManager.playGameOverSound(); // 播放 Game Over 音效
-                musicManager.pauseBGM();          // 【新增】暂停背景音乐，让环境安静下来
+                musicManager.playGameOverSound();
+                musicManager.pauseBGM();
             }
 
-            // 改为通过回调通知 MainActivity，而不是直接启动 EndActivity
-            if (getContext() instanceof android.app.Activity) {
-                android.app.Activity activity = (android.app.Activity) getContext();
-                activity.runOnUiThread(() -> {
-                    // 调用回调接口，让 MainActivity 处理界面跳转
-                    if (onGameEndListener != null) {
-                        onGameEndListener.onGameEnd(score);
-                    }
-                });
-            }
-
-            // 保存本局记录（本地 + 云端），使用持久化玩家 ID 区分不同设备
+            // 保存本局记录（本地 + 云端）
             String playerName = getPlayerName();
             GameRecord newRecord = new GameRecord(playerName, this.score, new Date(), this.difficulty);
-            GameRecordDao dao = new GameRecordDaoImpl(getContext());
-            dao.addRecord(newRecord);
-
-            // 联机模式额外上传到云端
+            new GameRecordDaoImpl(getContext()).addRecord(newRecord);
             if (gameManager != null && gameManager.isOnline()) {
-                GameRecordDao cloudDao = new GameRecordDaoCloud();
-                cloudDao.addRecord(newRecord);
+                new GameRecordDaoCloud().addRecord(newRecord);
+                gameManager.sendGameOver(score);
             }
-            return; //游戏结束后停止处理
+
+            // 单人模式 or 联机但对手已死 → 立即结束
+            // 联机且对手还活着 → 等待（循环继续但 action 开头直接 return）
+            if (gameManager == null || !gameManager.isOnline() || opponentGameOver) {
+                doEndGame();
+            }
+        }
+    }
+
+    private void doEndGame() {
+        if (!gameEndTriggered.compareAndSet(false, true)) return;
+        mbLoop = false;
+        final int finalOpponentScore = opponentScore;
+        final boolean online = gameManager != null && gameManager.isOnline();
+        if (getContext() instanceof android.app.Activity) {
+            ((android.app.Activity) getContext()).runOnUiThread(() -> {
+                if (onGameEndListener != null) {
+                    onGameEndListener.onGameEnd(score, finalOpponentScore, online);
+                }
+            });
         }
     }
 
@@ -561,12 +572,22 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
             }
         }
 
-        // 联机对手分数显示
+        // 联机对手分数（左侧，难度下方）
         if (gameManager != null && gameManager.isOnline()) {
-            paint.setTextSize(50);
-            paint.setColor(opponentGameOver ? Color.GRAY : Color.CYAN);
-            canvas.drawText("OPPONENT:" + opponentScore
-                    + (opponentGameOver ? "(DEAD)" : ""), screenWidth - 500, 80, paint);
+            y += 60;
+            paint.setTextSize(44);
+            paint.setColor(opponentGameOver ? Color.GRAY : Color.YELLOW);
+            canvas.drawText("对手:" + opponentScore
+                    + (opponentGameOver ? "(已死亡)" : ""), x, y, paint);
+        }
+
+        // 本地玩家已死，等待对手完赛时显示提示
+        if (iDied && gameManager != null && gameManager.isOnline() && !opponentGameOver) {
+            paint.setTextSize(52);
+            paint.setColor(Color.WHITE);
+            String waitText = "等待对手完赛...";
+            canvas.drawText(waitText, (screenWidth - paint.measureText(waitText)) / 2,
+                    screenHeight / 2f, paint);
         }
     }
 
@@ -577,10 +598,14 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
         synchronized (threadLock) {
             // 重置计时器和标志
             score = 0;
+            opponentScore = 0;
+            opponentGameOver = false;
             time = 0;
             cycleTime = 0;
             heroShootCycleTime = 0;
             gameOverFlag = false;
+            iDied = false;
+            gameEndTriggered.set(false);
 
             // 清空所有列表
             enemyAircrafts.clear();
@@ -781,19 +806,27 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback, Runnabl
     public void setOpponentGameOver(int score) {
         this.opponentScore = score;
         this.opponentGameOver = true;
+        // 如果本地玩家已死且正在等待，立即结束游戏
+        if (iDied) {
+            doEndGame();
+        }
     }
 
     public void onOpponentDisconnect() {
         this.opponentGameOver = true;
+        if (iDied) {
+            doEndGame();
+        }
     }
 
     private String getPlayerName() {
-        SharedPreferences prefs = getContext().getSharedPreferences("game_prefs", Context.MODE_PRIVATE);
-        String id = prefs.getString("player_id", null);
-        if (id == null) {
-            id = String.format("%04d", (int) (Math.random() * 10000));
-            prefs.edit().putString("player_id", id).apply();
+        SharedPreferences prefs = getContext().getSharedPreferences(
+                LoginActivity.PREF_FILE, Context.MODE_PRIVATE);
+        String name = prefs.getString(LoginActivity.KEY_NAME, null);
+        if (name == null || name.isEmpty()) {
+            name = "Player_" + String.format("%04d", (int) (Math.random() * 10000));
+            prefs.edit().putString(LoginActivity.KEY_NAME, name).apply();
         }
-        return "Player_" + id;
+        return name;
     }
 }

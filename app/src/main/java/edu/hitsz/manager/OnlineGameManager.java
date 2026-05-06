@@ -4,24 +4,29 @@ import edu.hitsz.network.SocketClient;
 
 public class OnlineGameManager implements GameManager {
 
-    private final SocketClient client = new SocketClient();
-    private final String roomId;
+    /**
+     * RoomActivity 连接并等待 START 后，将自身存入此字段；
+     * MainActivity 取走后立即置 null，防止泄漏。
+     */
+    public static volatile OnlineGameManager pending;
 
-    public OnlineGameManager(String roomId) {
-        this.roomId = roomId;
-    }
+    private final SocketClient client = new SocketClient();
+
+    public OnlineGameManager() {}
 
     public SocketClient getClient() {
         return client;
     }
 
-    @Override
-    public void initialize() {
+    public void setCallback(SocketClient.MessageCallback callback) {
+        client.setCallback(callback);
     }
 
     @Override
-    public void reset() {
-    }
+    public void initialize() {}
+
+    @Override
+    public void reset() {}
 
     @Override
     public void cleanup() {

@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(ls -la /d/AndroidStudioProjects/AircraftWar2/app/src/main/res/drawable/*.png)"
+      "Bash(ls -la /d/AndroidStudioProjects/AircraftWar2/app/src/main/res/drawable/*.png)",
+      "mcp__ide__getDiagnostics"
     ]
   }
 }

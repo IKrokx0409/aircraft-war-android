@@ -29,7 +29,18 @@
         android:textSize="32sp"
         android:textColor="#000000"
         android:gravity="center"
-        android:layout_marginBottom="50dp" />
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:id="@+id/tv_opponent_score"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="对手得分：0"
+        android:textSize="32sp"
+        android:textColor="#555555"
+        android:gravity="center"
+        android:layout_marginBottom="50dp"
+        android:visibility="gone" />
 
     <!-- 查看排行榜按钮 -->
     <Button

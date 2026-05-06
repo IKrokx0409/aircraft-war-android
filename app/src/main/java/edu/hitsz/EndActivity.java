@@ -2,66 +2,70 @@ package edu.hitsz;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 
 public class EndActivity extends AppCompatActivity {
 
-    private TextView tvScore;
-    private Button btnRanking, btnRestart, btnMainMenu, btnExit;
-    private int finalScore;
-
-    // 定义返回结果常量
     public static final int RESULT_RESTART = 100;
-    public static final int RESULT_MENU = 101;
-    public static final int RESULT_EXIT = 102;
+    public static final int RESULT_MENU    = 101;
+    public static final int RESULT_EXIT    = 102;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_end);
 
-        // 初始化组件
-        tvScore = findViewById(R.id.tv_score);
-        btnRanking = findViewById(R.id.btn_ranking);
-        btnRestart = findViewById(R.id.btn_restart);
-        btnMainMenu = findViewById(R.id.btn_main_menu);
-        btnExit = findViewById(R.id.btn_exit);
+        TextView tvTitle         = findViewById(R.id.tv_game_over);
+        TextView tvScore         = findViewById(R.id.tv_score);
+        TextView tvOpponentScore = findViewById(R.id.tv_opponent_score);
+        Button btnRanking  = findViewById(R.id.btn_ranking);
+        Button btnRestart  = findViewById(R.id.btn_restart);
+        Button btnMainMenu = findViewById(R.id.btn_main_menu);
+        Button btnExit     = findViewById(R.id.btn_exit);
 
-        // 获取游戏结束时的得分
-        finalScore = getIntent().getIntExtra("score", 0);
+        int     myScore       = getIntent().getIntExtra("score", 0);
+        String  myName        = getIntent().getStringExtra("myName");
+        int     opponentScore = getIntent().getIntExtra("opponentScore", 0);
+        String  opponentName  = getIntent().getStringExtra("opponentName");
+        boolean isOnline      = getIntent().getBooleanExtra("isOnline", false);
 
-        // 显示得分
-        tvScore.setText(getString(R.string.final_score, finalScore));
+        if (myName == null || myName.isEmpty()) myName = "我";
+        if (opponentName == null || opponentName.isEmpty()) opponentName = "对手";
 
-        // 查看排行榜按钮
-        btnRanking.setOnClickListener(v -> {
-            startActivity(new Intent(this, RankingActivity.class));
-        });
+        if (isOnline) {
+            if (myScore > opponentScore) {
+                tvTitle.setText("你赢了！");
+                tvTitle.setTextColor(0xFF00AA00);
+            } else if (myScore < opponentScore) {
+                tvTitle.setText("你输了");
+                tvTitle.setTextColor(0xFFCC0000);
+            } else {
+                tvTitle.setText("平局");
+                tvTitle.setTextColor(0xFFFF8800);
+            }
 
-        // 重新开始按钮
-        btnRestart.setOnClickListener(v -> {
-            setResult(RESULT_RESTART);
-            finish();
-        });
+            tvScore.setText(myName + "：" + myScore + " 分");
+            tvOpponentScore.setText(opponentName + "：" + opponentScore + " 分");
+            tvOpponentScore.setVisibility(View.VISIBLE);
 
-        // 返回主菜单按钮
-        btnMainMenu.setOnClickListener(v -> {
-            setResult(RESULT_MENU);
-            finish();
-        });
+            btnRestart.setVisibility(View.GONE);
+        } else {
+            tvScore.setText(getString(R.string.final_score, myScore));
+        }
 
-        // 退出游戏按钮
-        btnExit.setOnClickListener(v -> {
-            setResult(RESULT_EXIT);
-            finish();
-        });
+        btnRanking.setOnClickListener(v ->
+                startActivity(new Intent(this, RankingActivity.class)));
+
+        btnRestart.setOnClickListener(v -> { setResult(RESULT_RESTART); finish(); });
+        btnMainMenu.setOnClickListener(v -> { setResult(RESULT_MENU);    finish(); });
+        btnExit.setOnClickListener(v ->     { setResult(RESULT_EXIT);    finish(); });
     }
 
     @Override
     public void onBackPressed() {
-        //如果用户按返回键，作为返回主菜单处理
         setResult(RESULT_MENU);
         super.onBackPressed();
     }
