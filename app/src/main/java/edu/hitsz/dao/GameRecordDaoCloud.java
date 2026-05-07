@@ -35,7 +35,7 @@ public class GameRecordDaoCloud implements GameRecordDao {
             .readTimeout(5, TimeUnit.SECONDS)
             .build();
 
-    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());  // 发回主线程
     private String currentDifficulty = "normal";
 
     private final Gson gson = new GsonBuilder()

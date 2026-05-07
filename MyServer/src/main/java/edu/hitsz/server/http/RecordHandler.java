@@ -29,6 +29,7 @@ public class RecordHandler implements HttpHandler {
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
+        // CROS响应头
         exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
         exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
         exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type");
@@ -57,6 +58,7 @@ public class RecordHandler implements HttpHandler {
         }
     }
 
+    // 查询排行榜
     private synchronized void doGet(HttpExchange exchange) throws IOException {
         String query = exchange.getRequestURI().getQuery();
         String difficulty = getParam(query, "difficulty");
@@ -73,6 +75,7 @@ public class RecordHandler implements HttpHandler {
         exchange.getResponseBody().write(bytes);
     }
 
+    // 新增记录
     private synchronized void doPost(HttpExchange exchange) throws IOException {
         String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
         GameRecord record = gson.fromJson(body, GameRecord.class);
@@ -91,6 +94,7 @@ public class RecordHandler implements HttpHandler {
         exchange.getResponseBody().write(bytes);
     }
 
+    // 删除记录
     private synchronized void doDelete(HttpExchange exchange) throws IOException {
         String query = exchange.getRequestURI().getQuery();
         String difficulty = getParam(query, "difficulty");

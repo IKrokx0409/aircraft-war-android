@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(ls -la /d/AndroidStudioProjects/AircraftWar2/app/src/main/res/drawable/*.png)",
-      "mcp__ide__getDiagnostics"
+      "mcp__ide__getDiagnostics",
+      "Bash(Get-ChildItem -Path \"D:\\\\AndroidStudioProjects\\\\AircraftWar2\" -Recurse -Directory)",
+      "Bash(Select-Object FullName)",
+      "Bash(dir \"D:\\\\AndroidStudioProjects\\\\AircraftWar2\" /s /b)",
+      "Bash(findstr \"\\\\.md$\")"
     ]
   }
 }
