@@ -1,7 +1,10 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
     <style name="Base.Theme.AircraftWar" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your dark theme here. -->
-        <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+        <item name="colorPrimary">#00BCD4</item>
+        <item name="colorPrimaryVariant">#00838F</item>
+        <item name="android:windowBackground">@color/color_background</item>
+        <item name="colorSurface">@color/color_card_bg</item>
+        <item name="colorOnSurface">@color/color_text_primary</item>
+        <item name="colorOnPrimary">@color/color_background</item>
     </style>
 </resources>

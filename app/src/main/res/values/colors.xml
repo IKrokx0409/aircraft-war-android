@@ -2,4 +2,19 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- Dark Space Theme -->
+    <color name="color_background">#0D1117</color>
+    <color name="color_title">#00E5FF</color>
+    <color name="color_text_primary">#FFFFFF</color>
+    <color name="color_text_secondary">#B0BEC5</color>
+    <color name="color_accent_gold">#FFD740</color>
+    <color name="color_button_stroke">#00BCD4</color>
+    <color name="color_button_text">#00E5FF</color>
+    <color name="color_divider">#1E2D3D</color>
+    <color name="color_card_bg">#111827</color>
+    <color name="color_easy">#4CAF50</color>
+    <color name="color_normal">#42A5F5</color>
+    <color name="color_hard">#FF5252</color>
+    <color name="color_button_back">#546E7A</color>
 </resources>

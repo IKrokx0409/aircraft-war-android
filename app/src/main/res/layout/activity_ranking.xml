@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="16dp"
+    android:background="@color/color_background">
 
     <TextView
         android:layout_width="match_parent"
@@ -11,8 +13,9 @@
         android:text="排行榜"
         android:textSize="32sp"
         android:textStyle="bold"
-        android:textColor="#FF0000"
+        android:textColor="@color/color_title"
         android:gravity="center"
+        android:letterSpacing="0.08"
         android:layout_marginBottom="12dp" />
 
     <!-- 本地/云端切换 -->
@@ -24,21 +27,31 @@
 
         <Button
             android:id="@+id/btn_tab_local"
+            style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="0dp"
             android:layout_height="40dp"
             android:layout_weight="1"
             android:text="本地"
             android:textSize="16sp"
-            android:layout_marginEnd="4dp" />
+            android:textColor="@color/color_button_text"
+            android:layout_marginEnd="4dp"
+            app:strokeColor="@color/color_button_stroke"
+            app:strokeWidth="1dp"
+            app:cornerRadius="8dp" />
 
         <Button
             android:id="@+id/btn_tab_cloud"
+            style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="0dp"
             android:layout_height="40dp"
             android:layout_weight="1"
             android:text="云端"
             android:textSize="16sp"
-            android:layout_marginStart="4dp" />
+            android:textColor="@color/color_button_text"
+            android:layout_marginStart="4dp"
+            app:strokeColor="@color/color_button_stroke"
+            app:strokeWidth="1dp"
+            app:cornerRadius="8dp" />
 
     </LinearLayout>
 
@@ -51,31 +64,46 @@
 
         <Button
             android:id="@+id/btn_tab_easy"
+            style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="0dp"
             android:layout_height="40dp"
             android:layout_weight="1"
             android:text="简单"
             android:textSize="15sp"
-            android:layout_marginEnd="4dp" />
+            android:textColor="@color/color_easy"
+            android:layout_marginEnd="4dp"
+            app:strokeColor="@color/color_easy"
+            app:strokeWidth="1dp"
+            app:cornerRadius="8dp" />
 
         <Button
             android:id="@+id/btn_tab_normal"
+            style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="0dp"
             android:layout_height="40dp"
             android:layout_weight="1"
             android:text="普通"
             android:textSize="15sp"
+            android:textColor="@color/color_normal"
             android:layout_marginStart="4dp"
-            android:layout_marginEnd="4dp" />
+            android:layout_marginEnd="4dp"
+            app:strokeColor="@color/color_normal"
+            app:strokeWidth="1dp"
+            app:cornerRadius="8dp" />
 
         <Button
             android:id="@+id/btn_tab_hard"
+            style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="0dp"
             android:layout_height="40dp"
             android:layout_weight="1"
             android:text="困难"
             android:textSize="15sp"
-            android:layout_marginStart="4dp" />
+            android:textColor="@color/color_hard"
+            android:layout_marginStart="4dp"
+            app:strokeColor="@color/color_hard"
+            app:strokeWidth="1dp"
+            app:cornerRadius="8dp" />
 
     </LinearLayout>
 
@@ -93,7 +121,7 @@
             android:layout_height="wrap_content"
             android:text="名次"
             android:textSize="14sp"
-            android:textColor="#999999"
+            android:textColor="@color/color_text_primary"
             android:gravity="center" />
 
         <TextView
@@ -102,7 +130,7 @@
             android:layout_weight="1"
             android:text="玩家"
             android:textSize="14sp"
-            android:textColor="#999999"
+            android:textColor="@color/color_text_primary"
             android:paddingStart="8dp" />
 
         <TextView
@@ -110,7 +138,7 @@
             android:layout_height="wrap_content"
             android:text="分数"
             android:textSize="14sp"
-            android:textColor="#999999"
+            android:textColor="@color/color_text_primary"
             android:gravity="center" />
 
         <TextView
@@ -118,7 +146,7 @@
             android:layout_height="wrap_content"
             android:text="时间"
             android:textSize="14sp"
-            android:textColor="#999999"
+            android:textColor="@color/color_text_primary"
             android:gravity="center" />
 
         <TextView
@@ -126,7 +154,7 @@
             android:layout_height="wrap_content"
             android:text="操作"
             android:textSize="14sp"
-            android:textColor="#999999"
+            android:textColor="@color/color_text_primary"
             android:gravity="center" />
 
     </LinearLayout>
@@ -134,7 +162,7 @@
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="#DDDDDD"
+        android:background="@color/color_divider"
         android:layout_marginBottom="4dp" />
 
     <!-- 排行榜列表 -->
@@ -143,16 +171,21 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:divider="#EEEEEE"
+        android:divider="@color/color_divider"
         android:dividerHeight="1dp" />
 
     <!-- 返回按钮 -->
     <Button
         android:id="@+id/btn_back"
+        style="@style/Widget.Material3.Button.OutlinedButton"
         android:layout_width="match_parent"
         android:layout_height="50dp"
         android:text="返回"
         android:textSize="18sp"
-        android:layout_marginTop="8dp" />
+        android:textColor="@color/color_text_primary"
+        android:layout_marginTop="8dp"
+        app:strokeColor="@color/color_button_back"
+        app:strokeWidth="1dp"
+        app:cornerRadius="10dp" />
 
 </LinearLayout>

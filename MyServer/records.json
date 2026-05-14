@@ -71,6 +71,44 @@
       "score": 130,
       "difficulty": "normal",
       "timestamp": 1778080262341
+    },
+    {
+      "playerName": "syr",
+      "score": 30,
+      "difficulty": "normal",
+      "timestamp": 1778137024246
+    },
+    {
+      "playerName": "cxy",
+      "score": 60,
+      "difficulty": "normal",
+      "timestamp": 1778137026785
+    }
+  ],
+  "hard": [
+    {
+      "playerName": "syr",
+      "score": 40,
+      "difficulty": "hard",
+      "timestamp": 1778137074428
+    },
+    {
+      "playerName": "cxy",
+      "score": 190,
+      "difficulty": "hard",
+      "timestamp": 1778137083659
+    },
+    {
+      "playerName": "syr",
+      "score": 90,
+      "difficulty": "hard",
+      "timestamp": 1778137220166
+    },
+    {
+      "playerName": "cxy",
+      "score": 300,
+      "difficulty": "hard",
+      "timestamp": 1778137232146
     }
   ]
 }

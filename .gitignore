@@ -19,3 +19,5 @@ report/
 /.idea/compiler.xml
 /.idea/deploymentTargetSelector.xml
 /.idea/gradle.xml
+*.md
+!README.md

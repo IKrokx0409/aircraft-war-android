@@ -6,7 +6,9 @@
       "Bash(Get-ChildItem -Path \"D:\\\\AndroidStudioProjects\\\\AircraftWar2\" -Recurse -Directory)",
       "Bash(Select-Object FullName)",
       "Bash(dir \"D:\\\\AndroidStudioProjects\\\\AircraftWar2\" /s /b)",
-      "Bash(findstr \"\\\\.md$\")"
+      "Bash(findstr \"\\\\.md$\")",
+      "Bash(Get-Content *)",
+      "Bash(git add *)"
     ]
   }
 }

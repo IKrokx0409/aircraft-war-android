@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:gravity="center"
-    android:padding="40dp">
+    android:padding="40dp"
+    android:background="@color/color_background">
 
     <TextView
         android:layout_width="match_parent"
@@ -12,8 +14,9 @@
         android:text="飞机大战"
         android:textSize="52sp"
         android:textStyle="bold"
-        android:textColor="#FF0000"
+        android:textColor="@color/color_title"
         android:gravity="center"
+        android:letterSpacing="0.1"
         android:layout_marginBottom="12dp" />
 
     <TextView
@@ -21,7 +24,7 @@
         android:layout_height="wrap_content"
         android:text="请输入你的玩家名称"
         android:textSize="18sp"
-        android:textColor="#666666"
+        android:textColor="@color/color_text_secondary"
         android:gravity="center"
         android:layout_marginBottom="48dp" />
 
@@ -34,6 +37,9 @@
         android:maxLength="16"
         android:textSize="22sp"
         android:gravity="center"
+        android:textColor="@color/color_text_primary"
+        android:textColorHint="@color/color_text_secondary"
+        android:backgroundTint="@color/color_button_stroke"
         android:layout_marginBottom="32dp" />
 
     <Button
@@ -41,6 +47,8 @@
         android:layout_width="match_parent"
         android:layout_height="60dp"
         android:text="进入游戏"
-        android:textSize="22sp" />
+        android:textSize="22sp"
+        android:backgroundTint="@color/color_button_stroke"
+        app:cornerRadius="12dp" />
 
 </LinearLayout>
